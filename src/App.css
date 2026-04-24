@@ -83,6 +83,12 @@
   max-width: min(100%, 28rem);
 }
 
+.qr-host-outer,
+.qr-frame-wrap {
+  display: inline-block;
+  line-height: 0;
+}
+
 .qr-host {
   display: flex;
   align-items: center;

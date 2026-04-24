@@ -1,5 +1,12 @@
 import type QRCodeStyling from 'qr-code-styling'
 
+export type QrFrameOpts = {
+  enabled: boolean
+  widthPx: number
+  paddingPx: number
+  color: string
+}
+
 export type CaptionOpts = {
   top: string
   bottom: string
@@ -10,6 +17,8 @@ export type CaptionOpts = {
   gap: number
   qrSize: number
   background: string
+  /** Square border + padding around the QR grid (not counting captions). */
+  frame: QrFrameOpts
 }
 
 function wrapLine(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
@@ -52,6 +61,14 @@ export function hasCaptionText(top: string, bottom: string): boolean {
   return Boolean(top.trim() || bottom.trim())
 }
 
+function frameBlockOuter(qrSize: number, frame: QrFrameOpts | undefined): number {
+  if (!frame?.enabled) return qrSize
+  const W = Math.max(1, frame.widthPx)
+  const P = Math.max(0, frame.paddingPx)
+  const inner = qrSize + 2 * P
+  return inner + 2 * W
+}
+
 /**
  * Renders QR (PNG) + top/bottom captions; downloads raster formats.
  */
@@ -86,14 +103,15 @@ export async function downloadCaptionedRaster(
   const lineH = Math.ceil(opt.fontSize * 1.3)
   const topH = topLines.length * lineH
   const bottomH = bottomLines.length * lineH
+  const block = frameBlockOuter(opt.qrSize, opt.frame)
 
-  let maxW = opt.qrSize
+  let maxW = block
   for (const line of [...topLines, ...bottomLines]) {
     maxW = Math.max(maxW, Math.min(ctx.measureText(line).width, maxLineW))
   }
   const w = Math.ceil(maxW + pad * 2)
   const h = Math.ceil(
-    pad + (topH ? topH + gap : 0) + opt.qrSize + (bottomH ? gap + bottomH : 0) + pad,
+    pad + (topH ? topH + gap : 0) + block + (bottomH ? gap + bottomH : 0) + pad,
   )
 
   canvas.width = w
@@ -113,13 +131,26 @@ export async function downloadCaptionedRaster(
   }
   if (topLines.length) y += gap
 
-  const xQr = (w - opt.qrSize) / 2
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(bmp, xQr, y, opt.qrSize, opt.qrSize)
+  if (opt.frame?.enabled) {
+    const f = opt.frame
+    const W = Math.max(1, f.widthPx)
+    const P = Math.max(0, f.paddingPx)
+    const inner = opt.qrSize + 2 * P
+    const x0 = (w - block) / 2
+    ctx.fillStyle = f.color
+    ctx.fillRect(x0, y, block, block)
+    ctx.fillStyle = opt.background
+    ctx.fillRect(x0 + W, y + W, inner, inner)
+    ctx.drawImage(bmp, x0 + W + P, y + W + P, opt.qrSize, opt.qrSize)
+  } else {
+    const xQr = (w - opt.qrSize) / 2
+    ctx.drawImage(bmp, xQr, y, opt.qrSize, opt.qrSize)
+  }
   bmp.close()
 
-  y += opt.qrSize
+  y += block
   if (bottomLines.length) y += gap
   for (const line of bottomLines) {
     ctx.fillText(line, w / 2, y, maxLineW)
@@ -182,12 +213,13 @@ export async function downloadCaptionedSvg(
   const lineH = Math.ceil(opt.fontSize * 1.3)
   const topH = topLines.length * lineH
   const bottomH = bottomLines.length * lineH
-  let maxW = opt.qrSize
+  const block = frameBlockOuter(opt.qrSize, opt.frame)
+  let maxW = block
   for (const line of [...topLines, ...bottomLines]) {
     maxW = Math.max(maxW, Math.min(mctx.measureText(line).width, maxLineW))
   }
   const w = maxW + pad * 2
-  const h = pad + (topH ? topH + gap : 0) + opt.qrSize + (bottomH ? gap + bottomH : 0) + pad
+  const h = pad + (topH ? topH + gap : 0) + block + (bottomH ? gap + bottomH : 0) + pad
 
   const esc = (t: string) =>
     t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -209,11 +241,28 @@ export async function downloadCaptionedSvg(
     ty += lineH
   }
   const yQr = pad + (topH ? topH + gap : 0)
-  const xQr = (w - opt.qrSize) / 2
-  parts.push(
-    `<image href="data:image/png;base64,${b64}" x="${xQr.toFixed(1)}" y="${yQr.toFixed(1)}" width="${opt.qrSize}" height="${opt.qrSize}" preserveAspectRatio="xMidYMid meet"/>`,
-  )
-  let by = yQr + opt.qrSize
+  const xBlock = (w - block) / 2
+  if (opt.frame?.enabled) {
+    const f = opt.frame
+    const W = Math.max(1, f.widthPx)
+    const P = Math.max(0, f.paddingPx)
+    const inner = opt.qrSize + 2 * P
+    parts.push(
+      `<rect x="${xBlock.toFixed(1)}" y="${yQr.toFixed(1)}" width="${block.toFixed(1)}" height="${block.toFixed(1)}" fill="${esc(f.color)}"/>`,
+    )
+    parts.push(
+      `<rect x="${(xBlock + W).toFixed(1)}" y="${(yQr + W).toFixed(1)}" width="${inner.toFixed(1)}" height="${inner.toFixed(1)}" fill="${esc(opt.background)}"/>`,
+    )
+    parts.push(
+      `<image href="data:image/png;base64,${b64}" x="${(xBlock + W + P).toFixed(1)}" y="${(yQr + W + P).toFixed(1)}" width="${opt.qrSize}" height="${opt.qrSize}" preserveAspectRatio="xMidYMid meet"/>`,
+    )
+  } else {
+    const xQr = (w - opt.qrSize) / 2
+    parts.push(
+      `<image href="data:image/png;base64,${b64}" x="${xQr.toFixed(1)}" y="${yQr.toFixed(1)}" width="${opt.qrSize}" height="${opt.qrSize}" preserveAspectRatio="xMidYMid meet"/>`,
+    )
+  }
+  let by = yQr + block
   if (bottomLines.length) by += gap
   for (const line of bottomLines) {
     parts.push(
@@ -233,6 +282,10 @@ export async function downloadCaptionedSvg(
   URL.revokeObjectURL(a.href)
 }
 
+export function needsCompositeExport(cap: CaptionOpts): boolean {
+  return hasCaptionText(cap.top, cap.bottom) || Boolean(cap.frame?.enabled)
+}
+
 export async function downloadWithOptionalCaptions(
   qr: QRCodeStyling,
   ext: 'png' | 'svg' | 'jpeg' | 'webp',
@@ -240,7 +293,7 @@ export async function downloadWithOptionalCaptions(
   cap: CaptionOpts,
   plainDownload: () => void,
 ): Promise<void> {
-  if (!hasCaptionText(cap.top, cap.bottom)) {
+  if (!needsCompositeExport(cap)) {
     plainDownload()
     return
   }

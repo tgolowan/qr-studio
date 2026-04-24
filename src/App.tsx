@@ -107,6 +107,11 @@ function App() {
   const [captionColor, setCaptionColor] = useState('#0f172a')
   const [captionFontId, setCaptionFontId] = useState('system')
 
+  const [frameEnabled, setFrameEnabled] = useState(false)
+  const [frameWidthPx, setFrameWidthPx] = useState(6)
+  const [framePaddingPx, setFramePaddingPx] = useState(12)
+  const [frameColor, setFrameColor] = useState('#0f172a')
+
   const hostRef = useRef<HTMLDivElement>(null)
   const qrRef = useRef<QRCodeStyling | null>(null)
 
@@ -235,6 +240,12 @@ function App() {
       gap: 12,
       qrSize: size,
       background: exportCaptionBackground,
+      frame: {
+        enabled: frameEnabled,
+        widthPx: frameWidthPx,
+        paddingPx: framePaddingPx,
+        color: frameColor,
+      },
     }
     const plain = () => {
       void qr.download({ name, extension: ext })
@@ -316,7 +327,10 @@ function App() {
         <section className="card preview" aria-label="Preview">
           <div
             className="preview-frame"
-            style={{ background: hasCaptionText(captionTop, captionBottom) ? exportCaptionBackground : undefined }}
+            style={{
+              background:
+                hasCaptionText(captionTop, captionBottom) || frameEnabled ? exportCaptionBackground : undefined,
+            }}
           >
             <div className="qr-figure">
               {hasCaptionText(captionTop, captionBottom) && captionTop.trim() && (
@@ -332,7 +346,22 @@ function App() {
                   {captionTop}
                 </div>
               )}
-              <div className="qr-host" ref={hostRef} />
+              <div
+                className={frameEnabled ? 'qr-frame-wrap' : 'qr-host-outer'}
+                style={
+                  frameEnabled
+                    ? {
+                        border: `${frameWidthPx}px solid ${frameColor}`,
+                        padding: framePaddingPx,
+                        background: exportCaptionBackground,
+                        borderRadius: 4,
+                        boxSizing: 'content-box',
+                      }
+                    : undefined
+                }
+              >
+                <div className="qr-host" ref={hostRef} />
+              </div>
               {hasCaptionText(captionTop, captionBottom) && captionBottom.trim() && (
                 <div
                   className="qr-caption"
@@ -629,6 +658,46 @@ function App() {
                 </>
               )}
             </div>
+          </section>
+
+          <section className="card">
+            <h2>Frame around QR</h2>
+            <p className="small" style={{ marginTop: 0, marginBottom: 10 }}>
+              Optional square border with padding between the border and the code. Included in PNG, JPEG, WebP, and SVG
+              exports (when enabled, the file is composited so the frame matches the preview).
+            </p>
+            <label className="check">
+              <input type="checkbox" checked={frameEnabled} onChange={() => setFrameEnabled((v) => !v)} />
+              <span>Show square frame</span>
+            </label>
+            {frameEnabled && (
+              <div className="field-grid" style={{ marginTop: 10 }}>
+                <label>
+                  <span>Border width (px)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={48}
+                    value={frameWidthPx}
+                    onChange={(e) => setFrameWidthPx(Number(e.target.value) || 6)}
+                  />
+                </label>
+                <label>
+                  <span>Padding inside border (px)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={64}
+                    value={framePaddingPx}
+                    onChange={(e) => setFramePaddingPx(Number(e.target.value) || 0)}
+                  />
+                </label>
+                <label>
+                  <span>Border color</span>
+                  <input type="color" value={frameColor} onChange={(e) => setFrameColor(e.target.value)} />
+                </label>
+              </div>
+            )}
           </section>
 
           <section className="card">
