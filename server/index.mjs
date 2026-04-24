@@ -118,8 +118,17 @@ User-Agent: ${ua}
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(dist))
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(dist, 'index.html'))
+  // Express 5 / path-to-regexp v8: bare "*" is invalid; use middleware instead of app.get("*", …)
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      return next()
+    }
+    if (req.path.startsWith('/api') || req.path.startsWith('/t/')) {
+      return next()
+    }
+    res.sendFile(path.join(dist, 'index.html'), (err) => {
+      if (err) next(err)
+    })
   })
 }
 
