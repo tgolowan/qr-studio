@@ -31,9 +31,10 @@ gunicorn -b 0.0.0.0:${PORT:-5000} app:app
 - **WSGI:** open *Web → WSGI configuration file* and replace its contents with **`wsgi_pythonanywhere_option_b.py`** from this folder (edit `YOUR_USERNAME` and secrets), or use a minimal import only:
 
 ```python
-import sys
-os.chdir("/home/YOUR_USERNAME/qr-studio/python-api")
-sys.path.insert(0, "/home/YOUR_USERNAME/qr-studio/python-api")
+import os, sys
+project = "/home/YOUR_USERNAME/qr-studio/python-api"
+os.chdir(project)
+sys.path.insert(0, project)
 from app import app as application
 ```
 
