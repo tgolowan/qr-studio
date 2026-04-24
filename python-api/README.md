@@ -27,10 +27,20 @@ gunicorn -b 0.0.0.0:${PORT:-5000} app:app
 
 ## PythonAnywhere
 
-- Add these files; install dependencies in a virtualenv.
-- **WSGI** file: import `app` from `app` and use `application = app` (or point the WSGI config at `app:app` per their docs).
-- **Static files:** this service does not serve the React UI; only API routes are needed.
-- **Environment** variables: set `TELEGRAM_BOT_TOKEN`, SMTP, etc. in the web app config.
+- Clone the repo, create a venv in `python-api`, `pip install -r requirements.txt`, and set the **virtualenv path** on the Web tab.
+- **WSGI:** open *Web → WSGI configuration file* and replace its contents with **`wsgi_pythonanywhere_option_b.py`** from this folder (edit `YOUR_USERNAME` and secrets), or use a minimal import only:
+
+```python
+import sys
+os.chdir("/home/YOUR_USERNAME/qr-studio/python-api")
+sys.path.insert(0, "/home/YOUR_USERNAME/qr-studio/python-api")
+from app import app as application
+```
+
+  …and set env in the [PythonAnywhere “Environment variables”](https://help.pythonanywhere.com/pages/EnvironmentVariables/) Web UI, **or** use Option B (all vars in WSGI) in `wsgi_pythonanywhere_option_b.py`.
+
+- This API does not serve the React UI; only `/api` and `/t` are needed.
+- Free accounts may need **outbound** access whitelisted for `api.telegram.org` and your SMTP host.
 
 ## Data
 
