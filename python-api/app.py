@@ -24,19 +24,25 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# CORS: prefer flask-cors; if missing (pip not run in venv), use manual headers.
-try:
-    from flask_cors import CORS
+# CORS: always set on every response (browsers + PythonAnywhere / uWSGI). No optional dep.
+CORS_METHODS = "GET, POST, HEAD, OPTIONS"
+# Browsers may send "content-type" in Access-Control-Request-Headers; list common variants.
+CORS_ALLOW_HEADERS = (
+    "Content-Type, Authorization, Accept, Origin, X-Requested-With, "
+    "Accept-Language, Content-Language, Cache-Control, Pragma"
+)
 
-    CORS(app, resources={r"/*": {"origins": "*"}})
-except ImportError:
 
-    @app.after_request
-    def _cors_manual(resp: Response) -> Response:
-        resp.headers.setdefault("Access-Control-Allow-Origin", "*")
-        resp.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        resp.headers.setdefault("Access-Control-Allow-Headers", "Content-Type")
-        return resp
+@app.after_request
+def _cors_on_all(resp: Response) -> Response:
+    # Use assignment so we always set (setdefault can leave wrong values from upstream)
+    r = resp
+    h = r.headers
+    h["Access-Control-Allow-Origin"] = "*"
+    h["Access-Control-Allow-Methods"] = CORS_METHODS
+    h["Access-Control-Allow-Headers"] = CORS_ALLOW_HEADERS
+    h["Access-Control-Max-Age"] = "86400"
+    return r
 
 _DATA_DIR = Path(__file__).resolve().parent / "data"
 _STORE_PATH = _DATA_DIR / "tracks.json"

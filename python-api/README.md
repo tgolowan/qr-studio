@@ -17,7 +17,25 @@ cp ../.env.example .env     # or create .env; same SMTP / Telegram / throttle va
 python app.py
 ```
 
-**PythonAnywhere (missing modules):** the **Web** → *Virtualenv* path must be the venv where you ran `pip install -r requirements.txt` (e.g. `/home/you/qr-studio/python-api/venv`). In Bash: `source /path/to/venv/bin/activate` then `pip install -r .../python-api/requirements.txt`, then **Reload** the site. The app can run without `flask_cors` (built-in CORS fallback), but you still need `flask`, `requests`, and `python-dotenv`.
+**PythonAnywhere (missing modules):** the **Web** → *Virtualenv* path must be the venv where you ran `pip install -r requirements.txt` (e.g. `/home/you/qr-studio/python-api/venv`). In Bash: `source /path/to/venv/bin/activate` then `pip install -r .../python-api/requirements.txt`, then **Reload** the site. You need at least: `flask`, `requests`, `python-dotenv` (CORS is built into `app.py`).
+
+## CORS: step-by-step (local QR app → PythonAnywhere API)
+
+Do these in order:
+
+1. **Use `https` for the API** in your PC’s project `.env` (repo root, next to the React app), no trailing slash:
+   ```env
+   VITE_TRACKING_API_URL=https://YOURUSERNAME.pythonanywhere.com
+   ```
+2. **Restart the Vite dev server** after changing `.env` (`Ctrl+C`, then `npm run dev` again) so Vite picks up the variable.
+3. **Confirm the API is up:** open in a normal browser tab:
+   `https://YOURUSERNAME.pythonanywhere.com/api/health`  
+   You should see JSON. If you get an error page, fix the WSGI / reload first; CORS cannot work until the app runs.
+4. On PythonAnywhere: **Web** → set **Virtualenv** to the venv where you ran `pip install -r requirements.txt` → **Reload**.
+5. **Pull latest** `app.py` (we send `Access-Control-Allow-Origin: *` on all responses) and `git pull` on the server if you deploy from git.
+6. In the app, **Public origin** should match that same `https://YOURUSERNAME.pythonanywhere.com` (it prefills from `VITE_TRACKING_API_URL`).
+
+If the browser still reports CORS, open **DevTools → Network** → click the failed `tracks` (or preflight `OPTIONS`) request and read the **Response headers**. If `Access-Control-Allow-Origin` is missing, the response is not from this Flask app (cache or wrong URL). If the request is **blocked** before a response, check the request URL is exactly the HTTPS site above (no `http://`, no typo).
 
 Default port **5000**; override with `PORT=5000`.
 
