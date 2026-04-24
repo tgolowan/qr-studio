@@ -1,0 +1,113 @@
+:root {
+  --text: #5c6370;
+  --text-h: #0a0d12;
+  --bg: #f6f5f2;
+  --panel: #fff;
+  --input-bg: #fff;
+  --border: #d9d4cf;
+  --code-bg: #edebf0;
+  --accent: #5b21b6;
+  --accent-bg: rgba(91, 33, 182, 0.12);
+  --accent-border: rgba(91, 33, 182, 0.45);
+  --ok: #15803d;
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.08) 0 10px 20px -6px, rgba(0, 0, 0, 0.04) 0 3px 8px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #a1a7b3;
+    --text-h: #f1f2f4;
+    --bg: #0e0f12;
+    --panel: #181a20;
+    --input-bg: #12141a;
+    --border: #2a2e38;
+    --code-bg: #22252e;
+    --accent: #a78bfa;
+    --accent-bg: rgba(139, 92, 246, 0.2);
+    --accent-border: rgba(139, 92, 246, 0.55);
+    --ok: #4ade80;
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.5) 0 12px 32px -8px, rgba(0, 0, 0, 0.2) 0 4px 10px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+#root {
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100svh;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
