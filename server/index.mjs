@@ -13,6 +13,8 @@ const dist = path.join(__dirname, '..', 'dist')
 const app = express()
 const PORT = Number(process.env.PORT) || 3000
 
+const apiOnly = process.env.API_ONLY === '1' || String(process.env.SERVE_STATIC).toLowerCase() === 'false'
+
 app.use(
   cors({
     origin: true,
@@ -121,7 +123,7 @@ User-Agent: ${ua}
   res.redirect(302, row.targetUrl)
 })
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' && !apiOnly) {
   app.use(express.static(dist))
   // Express 5 / path-to-regexp v8: bare "*" is invalid; use middleware instead of app.get("*", …)
   app.use((req, res, next) => {
@@ -138,7 +140,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.listen(PORT, () => {
-  console.log(`[qr-studio] API & redirects http://127.0.0.1:${PORT}`)
+  if (apiOnly) {
+    console.log(
+      `[qr-studio] API-only (no static UI) — /api/* and /t/* on port ${PORT}. Use QR designer locally with VITE_TRACKING_API_URL pointing here.`,
+    )
+  } else {
+    console.log(`[qr-studio] API + static UI (production) on port ${PORT}`)
+  }
   console.log(
     isMailConfigured()
       ? 'SMTP: configured'

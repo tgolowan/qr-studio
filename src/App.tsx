@@ -10,6 +10,7 @@ import type {
   ShapeType,
 } from 'qr-code-styling'
 import { downloadWithOptionalCaptions, type CaptionOpts, hasCaptionText } from './captionDownload'
+import { getApiUrl, getDefaultPublicOrigin, getTrackingApiBase } from './trackingConfig'
 import './App.css'
 
 const CAPTION_FONTS: { id: string; label: string; stack: string }[] = [
@@ -64,9 +65,7 @@ function makeRadialGradient(c0: string, c1: string): Gradient {
 function App() {
   const [payloadMode, setPayloadMode] = useState<'url' | 'text' | 'email' | 'phone'>('url')
   const [rawValue, setRawValue] = useState('https://example.com')
-  const [publicOrigin, setPublicOrigin] = useState(
-    () => (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'),
-  )
+  const [publicOrigin, setPublicOrigin] = useState(getDefaultPublicOrigin)
   const [targetUrl, setTargetUrl] = useState('https://example.com')
   const [notifyEmail, setNotifyEmail] = useState('')
   const [notifyTelegramChatId, setNotifyTelegramChatId] = useState('')
@@ -114,6 +113,8 @@ function App() {
 
   const hostRef = useRef<HTMLDivElement>(null)
   const qrRef = useRef<QRCodeStyling | null>(null)
+
+  const remoteApiBase = getTrackingApiBase()
 
   const encodedData = useMemo(() => {
     if (useTracking && trackData) return trackData
@@ -268,7 +269,7 @@ function App() {
       setRegisterStatus('Add an email and/or a Telegram chat id for scan notifications.')
       return
     }
-    const r = await fetch('/api/tracks', {
+    const r = await fetch(getApiUrl('/api/tracks'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -320,7 +321,11 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>QR Studio</h1>
-        <p>Design codes with graphics and colors. Tracked links can notify you by email and/or Telegram when opened.</p>
+        <p>
+          Design QRs in the browser. For tracking, your QR points at a small hosted API; opens can notify you by email
+          and/or Telegram. Use <code>VITE_TRACKING_API_URL</code> to connect a local run to that API, or use{' '}
+          <code>npm run dev:full</code> for a local API.
+        </p>
       </header>
 
       <div className="app-grid">
@@ -464,10 +469,19 @@ function App() {
                     placeholder="http://192.168.1.10:5173"
                   />
                 </label>
-                <p className="small">
-                  For a phone to hit your machine, use your LAN address and the same port as Vite, or deploy and use your
-                  public URL. The code encodes <code>origin + /t/id</code>.
-                </p>
+                {remoteApiBase ? (
+                  <p className="small">
+                    Using remote tracking API <code>{remoteApiBase}</code> (from <code>VITE_TRACKING_API_URL</code>).
+                    Public origin is prefilled; keep it the same as that API’s base URL so the QR and Register target one
+                    host.
+                  </p>
+                ) : (
+                  <p className="small">
+                    <strong>Local only:</strong> run the API (<code>npm run dev:full</code>) or set{' '}
+                    <code>VITE_TRACKING_API_URL</code> in <code>.env</code> to a deployed API to register links while
+                    designing offline. The QR encodes <code>public origin + /t/id</code>.
+                  </p>
+                )}
                 <button type="button" className="primary" onClick={registerTrack}>
                   Register &amp; set QR to tracking link
                 </button>
