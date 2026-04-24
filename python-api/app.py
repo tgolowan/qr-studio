@@ -24,10 +24,19 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# CORS: browser on localhost and production Vite may POST from file:// or any origin
-from flask_cors import CORS
+# CORS: prefer flask-cors; if missing (pip not run in venv), use manual headers.
+try:
+    from flask_cors import CORS
 
-CORS(app, resources={r"/*": {"origins": "*"}})
+    CORS(app, resources={r"/*": {"origins": "*"}})
+except ImportError:
+
+    @app.after_request
+    def _cors_manual(resp: Response) -> Response:
+        resp.headers.setdefault("Access-Control-Allow-Origin", "*")
+        resp.headers.setdefault("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        resp.headers.setdefault("Access-Control-Allow-Headers", "Content-Type")
+        return resp
 
 _DATA_DIR = Path(__file__).resolve().parent / "data"
 _STORE_PATH = _DATA_DIR / "tracks.json"
@@ -156,8 +165,10 @@ def health():
     )
 
 
-@app.post("/api/tracks")
+@app.route("/api/tracks", methods=["POST", "OPTIONS"])
 def post_track():
+    if request.method == "OPTIONS":
+        return Response(status=204)
     body = request.get_json(silent=True) or {}
     target_url = body.get("targetUrl")
     notify_email = (body.get("notifyEmail") or "").strip() if isinstance(body.get("notifyEmail"), str) else ""

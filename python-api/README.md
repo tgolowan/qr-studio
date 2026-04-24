@@ -17,6 +17,8 @@ cp ../.env.example .env     # or create .env; same SMTP / Telegram / throttle va
 python app.py
 ```
 
+**PythonAnywhere (missing modules):** the **Web** → *Virtualenv* path must be the venv where you ran `pip install -r requirements.txt` (e.g. `/home/you/qr-studio/python-api/venv`). In Bash: `source /path/to/venv/bin/activate` then `pip install -r .../python-api/requirements.txt`, then **Reload** the site. The app can run without `flask_cors` (built-in CORS fallback), but you still need `flask`, `requests`, and `python-dotenv`.
+
 Default port **5000**; override with `PORT=5000`.
 
 ## Production (Gunicorn)
