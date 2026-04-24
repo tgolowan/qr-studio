@@ -418,9 +418,14 @@ function App() {
                   />
                 </label>
                 <p className="small">
-                  Telegram: create a bot with <a href="https://t.me/BotFather">@BotFather</a>, put{' '}
-                  <code>TELEGRAM_BOT_TOKEN</code> in the server <code>.env</code>, then message your bot and get your
-                  id from <a href="https://t.me/userinfobot">@userinfobot</a> (or the chat id of a group the bot is in).
+                  <strong>Telegram setup:</strong> create a bot in <a href="https://t.me/BotFather">@BotFather</a>, add{' '}
+                  <code>TELEGRAM_BOT_TOKEN</code> to the <strong>server</strong> environment (e.g. Render →
+                  Environment). Open a <strong>private chat with your bot</strong> and tap <strong>Start</strong> (the
+                  bot only send you messages after that). Paste your numeric id from{' '}
+                  <a href="https://t.me/userinfobot">@userinfobot</a> here. After you register,{' '}
+                  <strong>notifications appear when someone opens the tracking link</strong> from the QR—not from
+                  opening the bot by itself. Verify <code>/api/health</code> shows <code>&quot;telegram&quot;: true</code>{' '}
+                  on your deployed site.
                 </p>
                 <label>
                   <span>Public origin of this app (what the QR will encode)</span>

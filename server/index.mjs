@@ -103,10 +103,15 @@ User-Agent: ${ua}
     }
     if (row.notifyTelegramChatId?.trim()) {
       try {
+        if (!isTelegramConfigured()) {
+          console.warn(
+            '[qr-studio] Track has Telegram chat id but TELEGRAM_BOT_TOKEN is not set in server environment',
+          )
+        }
         const tResult = await sendTelegramMessage({ chatId: row.notifyTelegramChatId, text: bodyText.trim() })
         if (tResult.ok || tResult.skipped) throttled = true
       } catch (e) {
-        console.error('[qr-studio] telegram send failed', e)
+        console.error('[qr-studio] telegram send failed (see Telegram API error below)', e)
       }
     }
     if (throttled) {
